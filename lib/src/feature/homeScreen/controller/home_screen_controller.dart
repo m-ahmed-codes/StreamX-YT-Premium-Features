@@ -221,7 +221,6 @@
 //     }
 //   }
 
-
 //   //  Future<void> switchToVideo() async {
 //   //   if (AudioServiceHandler.handler.isPlaying()) {
 //   //     await AudioServiceHandler.handler.stop();
@@ -230,11 +229,9 @@
 //   //     await videoPlayerController!.seekTo(Duration(milliseconds: currentPosition));
 //   //     await videoPlayerController!.play();
 
-  
 //   //     update();
 //   //   }
 //   // }
-
 
 //    Future<void> switchToAudio() async {
 //     if (videoPlayerController!.value.isPlaying) {
@@ -263,8 +260,9 @@
 //     }
 //   }
 
-  
 // }
+import 'dart:io';
+import 'package:flutter_app_minimizer_plus/flutter_app_minimizer_plus.dart';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:chewie/chewie.dart';
@@ -320,10 +318,10 @@ class HomeScreenController extends GetxController {
 
     try {
       isLoading.value = true;
-      
+
       // Dispose any existing controllers first
       await _disposeControllers();
-      await _stopAudioService();
+      await stopAudioService();
 
       // Get both video and audio stream URLs
       final streamUrls = await _getYouTubeStreamUrls(youtubeUrl.text);
@@ -335,6 +333,7 @@ class HomeScreenController extends GetxController {
       // Initialize video player controller
       videoPlayerController = VideoPlayerController.networkUrl(
         Uri.parse(videoStreamUrl),
+        videoPlayerOptions: VideoPlayerOptions(allowBackgroundPlayback: true),
       );
 
       print('Video Stream URL: $videoStreamUrl');
@@ -444,10 +443,7 @@ class HomeScreenController extends GetxController {
       print('Title: ${video.title}');
       print('==================');
 
-      return {
-        'video': videoStreamUrl,
-        'audio': audioStreamUrl,
-      };
+      return {'video': videoStreamUrl, 'audio': audioStreamUrl};
     } catch (e) {
       print('Error in _getYouTubeStreamUrls: $e');
       throw Exception('Failed to get stream URLs: $e');
@@ -489,13 +485,56 @@ class HomeScreenController extends GetxController {
     }
   }
 
+
+
+  void showAudioModeInstructions() {
+  Get.dialog(
+    AlertDialog(
+      title: Text('🎵 Audio Mode Active'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Your audio is now playing in the background.'),
+          SizedBox(height: 16),
+          Text('📱 To continue listening:'),
+          SizedBox(height: 8),
+          Text('• Press the device BACK button to minimize'),
+          Text('• Or switch to another app'),
+          Text('• Audio will continue in notification panel'),
+          SizedBox(height: 16),
+          Text('🔊 Control playback from:'),
+          SizedBox(height: 8),
+          Text('• Notification panel'),
+          Text('• Lock screen controls'),
+          Text('• Headset buttons'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          child: Text('GOT IT'),
+          onPressed: () => Get.back(),
+        ),
+      ],
+    ),
+  );
+}
+
   // Switch to audio-only playback
   Future<void> switchToAudio() async {
+
+     
     try {
-      if (videoPlayerController != null && isVideoLoaded.value && !isAudioPlaying.value) {
+      if (videoPlayerController != null &&
+          isVideoLoaded.value &&
+          !isAudioPlaying.value) {
         // Get current position from video
-        int currentPosition = videoPlayerController!.value.position.inMilliseconds;
-        
+     isAudioPlaying.value = true;
+    // showAudioModeInstructions();
+    update();
+        int currentPosition =
+            videoPlayerController!.value.position.inMilliseconds;
+
         // Pause video
         await videoPlayerController!.pause();
         isPlaying.value = false;
@@ -504,35 +543,37 @@ class HomeScreenController extends GetxController {
         Duration totalDuration = videoPlayerController!.value.duration;
 
         // Setup audio service with media item
-        await AudioServiceHandler.handler.setMediaItem(MediaItem(
-          id: audioStreamUrl.value, // Use audio stream URL as ID
-          title: videoTitle.value,
-          artist: channelName.value,
-          duration: totalDuration,
-          artUri: thumbnailUrl.value.isNotEmpty ? Uri.parse(thumbnailUrl.value) : null,
-        ));
-
-        // Seek to current position and start audio playback
-        await AudioServiceHandler.handler.seek(Duration(milliseconds: currentPosition));
-        await AudioServiceHandler.handler.play();
-
-        // Update states
-        isAudioPlaying.value = true;
-        
-        Get.snackbar(
-          'Audio Mode',
-          'Switched to audio-only playback',
-          snackPosition: SnackPosition.BOTTOM,
+        await AudioServiceHandler.handler.setMediaItem(
+          MediaItem(
+            id:
+                videoPlayerController!
+                    .dataSource, 
+            title: videoTitle.value,
+            artist: channelName.value,
+            duration: totalDuration,
+            artUri:
+                thumbnailUrl.value.isNotEmpty
+                    ? Uri.parse(thumbnailUrl.value)
+                    : null,
+          ),
         );
 
-         Future.delayed(Duration(seconds: 2), () {
-        print('🚪 Closing app UI, audio continues in foreground...');
-        // This will close the app but audio continues
-        SystemNavigator.pop(); // Closes the app
-      });
-
-
         update();
+        // Seek to current position and start audio playback
+        await AudioServiceHandler.handler.seek(
+          Duration(milliseconds: currentPosition),
+        );
+        await AudioServiceHandler.handler.play();
+        // update();
+
+   
+     
+
+
+     
+      }
+      else{
+        print('object hello ');
       }
     } catch (e) {
       Get.snackbar(
@@ -546,30 +587,37 @@ class HomeScreenController extends GetxController {
   // Switch back to video playback
   Future<void> switchToVideo() async {
     try {
-      if (isAudioPlaying.value) {
-        // Get current position from audio service
-        int? currentPosition = await AudioServiceHandler.handler.retrieveCurrentPosition();
-        
-        // Stop audio service
-        await AudioServiceHandler.handler.stop();
-        
-        // Seek video to current position and play
-        if (currentPosition != null) {
-          await videoPlayerController!.seekTo(Duration(milliseconds: currentPosition));
-        }
-        await videoPlayerController!.play();
+      if (AudioServiceHandler.handler.isPlaying()) {
 
-        // Update states
+        print('object inside switch to video');
+
+         // Update states
         isAudioPlaying.value = false;
         isPlaying.value = true;
+        // Get current position from audio service
+        await AudioServiceHandler.handler.stop();
+        int? currentPosition =
+            await AudioServiceHandler.handler.retrieveCurrentPosition();
 
-        Get.snackbar(
-          'Video Mode',
-          'Switched back to video playback',
-          snackPosition: SnackPosition.BOTTOM,
+        // Stop audio service
+
+        // Seek video to current position and play
+        // if (currentPosition != null) {
+        // }
+        await videoPlayerController!.seekTo(
+          Duration(milliseconds: currentPosition),
         );
-
+        await videoPlayerController!.play();
         update();
+
+       
+
+        // Get.snackbar(
+        //   'Video Mode',
+        //   'Switched back to video playback',
+        //   snackPosition: SnackPosition.BOTTOM,
+        // );
+
       }
     } catch (e) {
       Get.snackbar(
@@ -581,21 +629,23 @@ class HomeScreenController extends GetxController {
   }
 
   // Stop audio service
-  Future<void> _stopAudioService() async {
-    try {
-      if (isAudioPlaying.value) {
-        await AudioServiceHandler.handler.stop();
-        isAudioPlaying.value = false;
-      }
-    } catch (e) {
-      print('Error stopping audio service: $e');
+  Future<void> stopAudioService() async {
+      isAudioPlaying.value = false;
+  try {
+    bool playing =  await AudioServiceHandler.handler.isPlaying();
+    if ( playing) {
+
+      await AudioServiceHandler.handler.stop();
     }
+  } catch (e) {
+    print("Error stopping audio service: $e");
   }
+}
 
   // Dispose controllers
   Future<void> _disposeControllers() async {
-    await _stopAudioService();
-    
+    await stopAudioService();
+
     if (chewieController != null) {
       chewieController!.dispose();
       chewieController = null;
@@ -605,7 +655,7 @@ class HomeScreenController extends GetxController {
       await videoPlayerController!.dispose();
       videoPlayerController = null;
     }
-    
+
     isVideoLoaded.value = false;
     isPlaying.value = false;
   }

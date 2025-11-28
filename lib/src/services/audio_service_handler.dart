@@ -12,7 +12,7 @@ class AudioServiceHandler {
     _audioHandler = await AudioService.init(
       builder: () => AudioPlayerHandler(),
       config: const AudioServiceConfig(
-        androidNotificationChannelId: 'com.example.stream_x.audio',
+        androidNotificationChannelId: 'com.example.stream_x',
         androidNotificationChannelName: 'Audio Playback',
         androidNotificationOngoing: true,
       ),
@@ -21,15 +21,4 @@ class AudioServiceHandler {
 
   static AudioPlayerHandler get handler => _audioHandler;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
 }

@@ -2,10 +2,17 @@
 
 
 import 'package:audio_service/audio_service.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:stream_x/src/feature/homeScreen/controller/home_screen_controller.dart';
 
 class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   final AudioPlayer _player = AudioPlayer();
+  
+  final HomeScreenController homeScreenController = Get.put(
+    HomeScreenController(),
+  );
 
   
   AudioPlayerHandler() {
@@ -42,7 +49,11 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
-  Future<void> stop() => _player.stop();
+  Future<void> stop() async{
+    homeScreenController.stopAudioService();
+
+  _player.stop();
+  } 
 
   Future<int> retrieveCurrentPosition() async {
     return _player.position.inMilliseconds;

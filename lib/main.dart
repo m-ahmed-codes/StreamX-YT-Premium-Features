@@ -4,9 +4,11 @@ import 'package:stream_x/src/feature/homeScreen/view/stream_x_screen.dart';
 import 'package:stream_x/src/services/audio_service_handler.dart';
 
 
+// import io.flutter.embedding.android.FlutterActivity
 
+// class MainActivity : FlutterActivity()
 
-void main() async{
+void main() async{  
    await AudioServiceHandler.initialize();
   runApp(const MyApp());
 }
