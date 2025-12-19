@@ -4,9 +4,8 @@ import 'package:stream_x/src/feature/homeScreen/view/stream_x_screen.dart';
 import 'package:stream_x/src/services/audio_service_handler.dart';
 
 
-// import io.flutter.embedding.android.FlutterActivity
 
-// class MainActivity : FlutterActivity()
+
 
 void main() async{  
    await AudioServiceHandler.initialize();
@@ -19,6 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'StreamX',
       theme: ThemeData(
         brightness: Brightness.light,

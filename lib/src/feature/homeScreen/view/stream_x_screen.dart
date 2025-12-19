@@ -1,11 +1,14 @@
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:floating/floating.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_app_minimizer_plus/flutter_app_minimizer_plus.dart';
 import 'package:get/get.dart';
 import 'package:chewie/chewie.dart';
 import 'package:stream_x/src/feature/homeScreen/controller/home_screen_controller.dart';
+import 'package:stream_x/src/feature/homeScreen/view/widgets/videoPlayer.dart';
 import 'package:stream_x/src/services/audio_service_handler.dart';
 
 class StreamXScreen extends StatelessWidget {
@@ -15,19 +18,7 @@ class StreamXScreen extends StatelessWidget {
     HomeScreenController(),
   );
 
-  // @override
-  // void didChangeAppLifecycleState(AppLifecycleState state) async {
-  //   if (state == AppLifecycleState.resumed) {
-  //     await homeScreenController.switchToVideo();
-  //   } else if (state == AppLifecycleState.detached) {
-  //     await AudioServiceHandler.handler.stop();
-  //   }
-  // }
-
-  // // void _minimizeToBackground() {
-  //   // This minimizes the app to background
-  //   SystemChannels.platform.invokeMethod('SystemNavigator.pop');
-  // }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -42,22 +33,17 @@ class StreamXScreen extends StatelessWidget {
     final Color secondaryTextColor =
         isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF4B799B);
 
+
+
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'StreamX',
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-      ),
-      body: CustomScrollView(
+      // appBar: AppBar(
+      //   backgroundColor: backgroundColor,
+      //   elevation: 0,
+      //   centerTitle: true,
+      //   title: 
+      // ),
+      body:  PiPSwitcher(childWhenEnabled: VideoPlayerWidget(homeScreenController), childWhenDisabled:  CustomScrollView(
         slivers: [
           SliverPadding(
             padding: const EdgeInsets.symmetric(
@@ -66,6 +52,19 @@ class StreamXScreen extends StatelessWidget {
             ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical:  28.0),
+                  child: Center(
+                    child: Text(
+                              'StreamX',
+                              style: TextStyle(
+                                color: textColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                  ),
+                ),
                 _buildUrlInputSection(
                   primaryColor,
                   secondaryTextColor,
@@ -87,9 +86,17 @@ class StreamXScreen extends StatelessWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
-      // bottomSheet: Obx(() => homeScreenController.isVideoLoaded.value
-      //     ? _buildStickyMiniPlayer(isDarkMode, textColor, secondaryTextColor)
-      //     : const SizedBox.shrink()),
+      
+      
+      
+      )
+      
+      
+
+    
+      
+    
+  
     );
   }
 
@@ -203,38 +210,24 @@ class StreamXScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
-                    ),
-                    child:
-                        homeScreenController.chewieController != null
-                            ? Chewie(
-                              controller:
-                                  homeScreenController.chewieController!,
-                            )
-                            : Container(
-                              color: Colors.black,
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    CircularProgressIndicator(
-                                      color: primaryColor,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'Loading video player...',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                  ),
+              
+                Column(
+                  children: [
+                 
+                        AspectRatio(
+                          aspectRatio:
+                             homeScreenController.videoPlayerController!.value.aspectRatio,
+                          child: Chewie(
+                            controller: homeScreenController.chewieController!,
+                            // key: ValueKey(controller.),
+                          ),
+                        )
+                       
+                       
+                  ],
                 ),
+
+          
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -299,36 +292,18 @@ class StreamXScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Obx(
-
                   () => ElevatedButton.icon(
                     onPressed: () async {
                       if (homeScreenController.isAudioPlaying.value) {
                         // If audio is playing, stop it
                         // await homeScreenController.stopAudioService();
                         await homeScreenController.switchToVideo();
-                        // Get.snackbar(
-                        //   'Audio Stopped',
-                        //   'Audio playback has been stopped',
-                        //   snackPosition: SnackPosition.BOTTOM,
-                        //   duration: Duration(seconds: 2),
-                        // );
-                        // homeScreenController.update();
                       } else {
                         // If audio is not playing, start it
 
-                    
-
                         await homeScreenController.switchToAudio();
-                        // FlutterAppMinimizerPlus.minimizeApp(); // Uncomment if you want to minimize
-                        // Get.snackbar(
-                        //   'Audio Only',
-                        //   'Playing audio stream',
-                        //   snackPosition: SnackPosition.BOTTOM,
-                        //   duration: Duration(seconds: 2),
-                        // );
-                       
 
-                          // homeScreenController.update();
+                        // homeScreenController.update();
                       }
                     },
                     icon: Icon(
@@ -350,32 +325,18 @@ class StreamXScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Expanded(
-              //   child: ElevatedButton.icon(
-              //     onPressed: () async{
-              //       // Audio only functionality
-              //       homeScreenController.switchToAudio();
-              //       // FlutterAppMinimizerPlus.minimizeApp();
-              //       // Get.snackbar(
-              //       //   'Audio Only',
-              //       //   'Playing audio stream',
-              //       //   snackPosition: SnackPosition.BOTTOM,
-              //       // );
-              //     },
-              //     icon: const Icon(Icons.headphones),
-              //     label: const Text('Audio Only'),
-              //     style: _playbackButtonStyle(primaryColor),
-              //   ),
-              // ),
+
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Get.snackbar(
-                      'PiP Mode',
-                      'Picture in Picture mode would be activated here',
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
+                  onPressed: () async {
+                    await homeScreenController.enterPiPMode();
+                    print('object');
+                    // Get.snackbar(
+                    //   'PiP Mode',
+                    //   'Picture in Picture mode would be activated here',
+                    //   snackPosition: SnackPosition.BOTTOM,
+                    // );
                   },
                   icon: const Icon(Icons.picture_in_picture_alt),
                   label: const Text('PiP Mode'),
@@ -434,116 +395,6 @@ class StreamXScreen extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
       minimumSize: const Size(0, 56),
       elevation: 0,
-    );
-  }
-
-  Widget _buildStickyMiniPlayer(
-    bool isDarkMode,
-    Color textColor,
-    Color secondaryTextColor,
-  ) {
-    final Color miniPlayerBackgroundColor =
-        isDarkMode
-            ? const Color.fromRGBO(15, 23, 42, 0.8)
-            : Colors.white.withOpacity(0.8);
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: Material(
-            color: miniPlayerBackgroundColor,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Obx(
-                    () => ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child:
-                          homeScreenController.thumbnailUrl.value.isNotEmpty
-                              ? Image.network(
-                                homeScreenController.thumbnailUrl.value,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: 50,
-                                    height: 50,
-                                    color: Colors.grey,
-                                    child: Icon(
-                                      Icons.music_note,
-                                      color: Colors.white,
-                                    ),
-                                  );
-                                },
-                              )
-                              : Container(
-                                width: 50,
-                                height: 50,
-                                color: Colors.grey,
-                                child: Icon(
-                                  Icons.music_note,
-                                  color: Colors.white,
-                                ),
-                              ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Obx(
-                          () => Text(
-                            homeScreenController.videoTitle.value,
-                            style: TextStyle(
-                              color: textColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Obx(
-                          () => Text(
-                            homeScreenController.channelName.value,
-                            style: TextStyle(
-                              color: secondaryTextColor,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Obx(
-                    () => IconButton(
-                      icon: Icon(
-                        homeScreenController.isPlaying.value
-                            ? Icons.pause
-                            : Icons.play_arrow,
-                        size: 30,
-                      ),
-                      color: textColor,
-                      onPressed: () => homeScreenController.togglePlayPause(),
-                    ),
-                  ),
-                  // IconButton(
-                  //   icon: const Icon(Icons.close),
-                  //   color: textColor,
-                  //   onPressed: () => homeScreenController.closeVideo(),
-                  // ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
